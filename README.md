@@ -1,38 +1,3 @@
-# Ola Party Room Bot
-
-Small utility that replays the Ola Party client’s HTTP + WebSocket handshake so an account can appear online automatically.  
-This repository contains the replay script (`2.py`), the captured join sequence (`join_sequence.py`), and a helper to rebuild that sequence from fresh `logcat` dumps.
-
-## Prerequisites
-
-- Python 3.9+
-- `OLA_AUTH_TOKEN` (URL‑encoded token captured from the Android client)
-- Optional overrides: `OLA_UID`, `OLA_WS_URL`, `OLA_ROOM_SIGNATURE`
-
-Configure credentials in one of two ways:
-
-1. **Edit `2.py` directly** – replace `DEFAULT_UID`, `DEFAULT_AUTH_TOKEN`, and `DEFAULT_WS_URL` near the top of the file.
-2. **Or export environment variables**:
-   - `OLA_UID` – numeric account id (e.g. `4463843692`)
-   - `OLA_AUTH_TOKEN` – URL‑encoded auth token captured from the device
-   - `OLA_WS_URL` – full websocket URL (e.g. `wss://i-875.ihago.net/ikxd_cproxy?token=...`)
-   - Optional: `OLA_ROOM_SIGNATURE` if the HTTP signature rotates
-
-Install dependencies and run:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-# If you didn't edit the defaults, export env vars before launching:
-# export OLA_UID='YOUR_UID'
-# export OLA_AUTH_TOKEN='YOUR_AUTH_TOKEN'
-# export OLA_WS_URL='YOUR_WS_URL'
-python 2.py
-```
-
-The script stays connected until interrupted (`Ctrl+C`). It logs every frame it replays and sends the recorded heartbeat every 15 seconds.
-
 ## Regenerating the WebSocket Sequence
 
 1. Capture a clean log on the device while joining a room:
@@ -52,19 +17,8 @@ The script stays connected until interrupted (`Ctrl+C`). It logs every frame it 
 The repository ships with a simple Dockerfile. Build or deploy it via Coolify, ensuring the required environment variable is provided:
 
 ```bash
-docker build -t ola-room-bot .
-# Optionally pass env vars if you kept the placeholders in 2.py
-docker run -e OLA_UID='YOUR_UID' \
-           -e OLA_AUTH_TOKEN='YOUR_AUTH_TOKEN' \
-           -e OLA_WS_URL='YOUR_WS_URL' \
-           ola-room-bot
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python 2.py
 ```
-
-You can mix and match—edit the defaults in `2.py` or override them with environment variables at runtime (including `OLA_ROOM_SIGNATURE` if needed).
-
-## Repository Layout
-
-- `2.py` – main bot script
-- `join_sequence.py` – decoded list of WebSocket frames
-- `tools/ws_log_to_frames.py` – helper to extract frames from logcat dumps
-- `requirements.txt`, `Dockerfile` – deployment helpers

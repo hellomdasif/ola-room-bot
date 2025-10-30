@@ -9,7 +9,6 @@ Dependencies:
 from __future__ import annotations
 
 import binascii
-import os
 import ssl
 import sys
 import time
@@ -20,36 +19,52 @@ from typing import Optional
 import requests
 import websocket
 
-from join_sequence import JOIN_SEQUENCE_B64
-
 
 # ---------------------------------------------------------------------------
 # 1. Credentials (from your script and logs)
 # ---------------------------------------------------------------------------
-# Either edit the defaults below or provide environment variables at runtime.
-DEFAULT_UID = "FILL_ME"
-DEFAULT_AUTH_TOKEN = "FILL_ME"  # URL-encoded token
-DEFAULT_WS_URL = "FILL_ME"      # e.g. wss://i-875.ihago.net/ikxd_cproxy?token=...
+UID = "4463843692"
 
-UID = os.environ.get("OLA_UID", DEFAULT_UID)
-AUTH_TOKEN = os.environ.get("OLA_AUTH_TOKEN", DEFAULT_AUTH_TOKEN)
-WS_URL = os.environ.get("OLA_WS_URL", DEFAULT_WS_URL)
+AUTH_TOKEN = (
+    "Wa3BrI3HLrM%2FqX44kzQJMnohNCtD0EIrjmGl1kQLMfcGhrws6Jf5pY8PBjYuHCo%2B,"
+    "nNM9ovMxw69wv2DeyfhQAr0ldFS6WWNvuFDX%2BlRxQBwTP%2F9HK%2FO8ethREB%2B0D"
+    "HnnqsndXLCGc%2Fo8ZlY%2B8INnxsmfqVf7bvFj8AQAtgRj88WSaQJ5WvYvV4pghTusbh"
+    "xTYLzxURb2dpUfwmGkFxlcScQQZUoAF97LpAQnwiQkk20rLjD2ps%2FpoXUvOEQxeihy4"
+    "tgO7HWQodopWCzC1nyrg8p7yB8hIadHLTAbWKYLZ5EWyO12zLydXY1ZVJt3gqQ%2FuijZ"
+    "Qe3XDEnWkwVcZnxhZDgJJqOuVbWi3Vu%2BJZdA9JgxQIPw9oK5qQ0bc5A7BO5X3UXoxOO"
+    "%2B7WhKiQEq5z0XC0OkyMDY%2BeQZuyDFqNluPEJq4RwT6Q8TqVBf56UPrEp3ogMyy2wv"
+    "KglAh0K5qQsvmZfRttG4lUn8Np%2F%2BXl1A5LhjqNF7Zidmz6adxsSvpvj%2BBqvS27K"
+    "RG%2BKEinywrA0TMR1x9xj4Pic0Vb2LCypKh0EqGL1xcPv88w%3D%3D"
+)
 
-if UID == "FILL_ME" or not UID:
-    raise SystemExit("Set OLA_UID or update DEFAULT_UID with the numeric account id.")
-if AUTH_TOKEN == "FILL_ME" or not AUTH_TOKEN:
-    raise SystemExit("Set OLA_AUTH_TOKEN or update DEFAULT_AUTH_TOKEN with the URL-encoded token.")
-if WS_URL == "FILL_ME" or not WS_URL:
-    raise SystemExit("Set OLA_WS_URL or update DEFAULT_WS_URL with the websocket URL.")
+WS_URL = "wss://i-875.ihago.net/ikxd_cproxy?token=4463843692"
 
 
 # ---------------------------------------------------------------------------
 # 2. NEW "Join Room" and "Heartbeat" Packets (from your new log)
 # ---------------------------------------------------------------------------
 
+# Ordered websocket frames captured immediately after entering the room
+JOIN_SEQUENCE_B64 = [
+    "Ch0KDWlreGRfb25saW5lX2QQhdrIsqMzIgVlbl9jYRADKkkiRwoGcm9vbWlkEj1DXzE5MjY4Nzg4ODE4NTMzNDg2NzJfVjJfSU5fMF9JTnxjaGF0fDE3NjE4NDc3ODQxNTgxNDY3NzcxOXww",
+    "CkYKGW5ldC5paGFnby5yb29tLnNydi5mb2xsb3cQmemps6MzIgVlbl9jYToSRm9sbG93LkdldFJlbGF0aW9uQgUwLjAuMEgBGgYIkZGJhRA=",
+    "CnYKHW5ldC5paGFnby5yb29tLmFwaS5jYWxjdWxhdG9yEKfpqbOjMyIFZW5fY2EyIENfMTkyNjg3ODg4MTg1MzM0ODY3Ml9WMl9JTl8wX0lOOhxDYWxjdWxhdG9yLkdldFJvb21DYWxjdWxhdG9yQgUwLjAuMEgB",
+    "Cl0KFm5ldC5paGFnby5tb25leS5hcGkucGsQqOmps6MzIgVlbl9jYTIgQ18xOTI2ODc4ODgxODUzMzQ4NjcyX1YyX0lOXzBfSU46ClBrLkdldENvbmZCBTAuMC4wSAE=",
+    "Cl8KFm5ldC5paGFnby5tb25leS5hcGkucGsQqemps6MzIgVlbl9jYTIgQ18xOTI2ODc4ODgxODUzMzQ4NjcyX1YyX0lOXzBfSU46DFBrLkdldFBLSW5mb0IFMC4wLjBIAQ==",
+    "ClgKHm5ldC5paGFnby5tb25leS5hcGkuY2hhdGJ1YmJsZRCy6amzozMiBWVuX2NhOh9DaGF0YnViYmxlLkdldFdlYXJpbmdDaGF0YnViYmxlQgUwLjAuMEgBGgYI7LLD0BA=",
+    "CmgKG25ldC5paGFnby5yb29tLmFwaS5iaWdlbW9qaRC26amzozMiBWVuX2NhMiBDXzE5MjY4Nzg4ODE4NTMzNDg2NzJfVjJfSU5fMF9JTjoQQmlnRW1vamkuR2V0TGlzdEIFMC4wLjBIARo6CjhDaUJsWW1ZeU16UXhPVFExTldRME5qTTBZV1EwWm1ZME5EUTNNV1JqTnpkbU54aTlrSXF5UWc9PQ==",
+    "Ck8KHW5ldC5paGFnby5tb25leS5hcGkubmlja2NvbG9yEOzpqbOjMyIFZW5fY2E6F05pY2tjb2xvci5HZXROaWNrY29sb3JzQgUwLjAuMEgBGkIIz7Cp0RAI1tWq0RAI+eW90RAI4+CIyhAI8JHI0BAIkZGJhRAIz+2XpxAIrPv80BAI/My4hRAIkb6c0RAIxcidsRA=",
+    "ChsKC2lreGRfdGFza19kEPHpqbOjMyIFZW5fY2EQCFIGCPnlvdEQ",
+    "ChsKC2lreGRfdGFza19kEPbpqbOjMyIFZW5fY2EQCFIGCOPgiMoQ",
+    "ChsKC2lreGRfdGFza19kEKbsqbOjMyIFZW5fY2EQCFIGCPnlvdEQ",
+    "ChsKC2lreGRfdGFza19kEKfsqbOjMyIFZW5fY2EQCFIGCOPgiMoQ",
+    "ChsKC2lreGRfdGFza19kEJzwqbOjMyIFZW5fY2EQCFIGCPnlvdEQ",
+    "ChsKC2lreGRfdGFza19kEJ7wqbOjMyIFZW5fY2EQCFIGCOPgiMoQ",
+    "ChsKC2lreGRfcm9vbV9kEPj/qbOjMyIFZW5fY2EQCxoXc180MzA1NjAyNzA1XzQ0NjM4NDM2OTJaAA==",
+]
 
 # Steady-state heartbeat captured after join (00:08:57.718+)
-HEARTBEAT_B64 = "ChsKC2lreGRfcm9vbV9kEMK48LSjMyIFZW5fY2EQCxoXc180MzA1NjAyNzA1XzQ0NjM4NDM2OTJa"
+HEARTBEAT_B64 = "Ch8KDWlreGRfb25saW5lX2QQnufIsqMzIgVlbl9jYVABEAMqAhgB"
 
 try:
     JOIN_SEQUENCE = [base64.b64decode(frame) for frame in JOIN_SEQUENCE_B64]
@@ -63,10 +78,10 @@ except binascii.Error as exc:
 # 3. HTTP "enter room" call (This is correct)
 # ---------------------------------------------------------------------------
 ROOM_URL = "https://mm-turnover.ihago.net/api/1802/1012"
-SIGNATURE = os.environ.get("OLA_ROOM_SIGNATURE", "e9a3e9f0b6770d8b98c3d3cd730bde10")
+SIGNATURE = "e9a3e9f0b6770d8b98c3d3cd730bde10"
 DATA_PAYLOAD = (
     '{"cmd":1012,"appId":1802,"version":0,"jsonMsg":{"cmd":1012,"seq":"5","uid":'
-    f"{UID}" ',"sid":0,"ssid":0,"appId":1802,"usedChannel":1855}}'
+    '4463843692,"sid":0,"ssid":0,"appId":1802,"usedChannel":1855}}'
 )
 
 HTTP_HEADERS = {
@@ -184,10 +199,10 @@ def main() -> None:
         heartbeat_thread.start()
 
         print("\nSUCCESS: You should now be ONLINE and IN THE CHATROOM.")
-        print("Process will keep running; press Ctrl+C to stop.")
-
-        while running:
-            time.sleep(60)
+        print("Check your other account.")
+        
+        # Keep main thread alive
+        input()
 
     except KeyboardInterrupt:
         print("\nInterrupted by user.")
