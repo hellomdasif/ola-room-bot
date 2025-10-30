@@ -9,13 +9,23 @@ This repository contains the replay script (`2.py`), the captured join sequence 
 - `OLA_AUTH_TOKEN` (URL‑encoded token captured from the Android client)
 - Optional overrides: `OLA_UID`, `OLA_WS_URL`, `OLA_ROOM_SIGNATURE`
 
+Set the required environment variables (no defaults are baked in):
+
+- `OLA_UID` – numeric account id (e.g. `4463843692`)
+- `OLA_AUTH_TOKEN` – URL‑encoded auth token captured from the device
+- `OLA_WS_URL` – full websocket URL (e.g. `wss://i-875.ihago.net/ikxd_cproxy?token=...`)
+- Optional: `OLA_ROOM_SIGNATURE` if the HTTP signature rotates
+
 Install dependencies and run:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-OLA_AUTH_TOKEN='YOUR_TOKEN' python 2.py
+OLA_UID='YOUR_UID' \
+OLA_AUTH_TOKEN='YOUR_AUTH_TOKEN' \
+OLA_WS_URL='YOUR_WS_URL' \
+python 2.py
 ```
 
 The script stays connected until interrupted (`Ctrl+C`). It logs every frame it replays and sends the recorded heartbeat every 15 seconds.
@@ -40,7 +50,11 @@ The repository ships with a simple Dockerfile. Build or deploy it via Coolify, e
 
 ```bash
 docker build -t ola-room-bot .
-docker run -e OLA_AUTH_TOKEN='YOUR_TOKEN' ola-room-bot
+docker run \
+  -e OLA_UID='YOUR_UID' \
+  -e OLA_AUTH_TOKEN='YOUR_AUTH_TOKEN' \
+  -e OLA_WS_URL='YOUR_WS_URL' \
+  ola-room-bot
 ```
 
 You can also pass `OLA_UID`, `OLA_WS_URL`, or `OLA_ROOM_SIGNATURE` if those differ from the defaults baked into the script.

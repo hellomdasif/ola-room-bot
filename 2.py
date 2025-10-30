@@ -26,12 +26,16 @@ from join_sequence import JOIN_SEQUENCE_B64
 # ---------------------------------------------------------------------------
 # 1. Credentials (from your script and logs)
 # ---------------------------------------------------------------------------
-UID = os.environ.get("OLA_UID", "4463843692")
+UID = os.environ.get("OLA_UID")
+if not UID:
+    raise SystemExit("Environment variable OLA_UID is required (numeric account id).")
 AUTH_TOKEN = os.environ.get("OLA_AUTH_TOKEN")
 if not AUTH_TOKEN:
     raise SystemExit("Environment variable OLA_AUTH_TOKEN is required (URL-encoded token).")
 
-WS_URL = os.environ.get("OLA_WS_URL", f"wss://i-875.ihago.net/ikxd_cproxy?token={UID}")
+WS_URL = os.environ.get("OLA_WS_URL")
+if not WS_URL:
+    raise SystemExit("Environment variable OLA_WS_URL is required (full websocket URL).")
 
 
 # ---------------------------------------------------------------------------
