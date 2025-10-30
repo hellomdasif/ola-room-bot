@@ -26,16 +26,21 @@ from join_sequence import JOIN_SEQUENCE_B64
 # ---------------------------------------------------------------------------
 # 1. Credentials (from your script and logs)
 # ---------------------------------------------------------------------------
-UID = os.environ.get("OLA_UID")
-if not UID:
-    raise SystemExit("Environment variable OLA_UID is required (numeric account id).")
-AUTH_TOKEN = os.environ.get("OLA_AUTH_TOKEN")
-if not AUTH_TOKEN:
-    raise SystemExit("Environment variable OLA_AUTH_TOKEN is required (URL-encoded token).")
+# Either edit the defaults below or provide environment variables at runtime.
+DEFAULT_UID = "FILL_ME"
+DEFAULT_AUTH_TOKEN = "FILL_ME"  # URL-encoded token
+DEFAULT_WS_URL = "FILL_ME"      # e.g. wss://i-875.ihago.net/ikxd_cproxy?token=...
 
-WS_URL = os.environ.get("OLA_WS_URL")
-if not WS_URL:
-    raise SystemExit("Environment variable OLA_WS_URL is required (full websocket URL).")
+UID = os.environ.get("OLA_UID", DEFAULT_UID)
+AUTH_TOKEN = os.environ.get("OLA_AUTH_TOKEN", DEFAULT_AUTH_TOKEN)
+WS_URL = os.environ.get("OLA_WS_URL", DEFAULT_WS_URL)
+
+if UID == "FILL_ME" or not UID:
+    raise SystemExit("Set OLA_UID or update DEFAULT_UID with the numeric account id.")
+if AUTH_TOKEN == "FILL_ME" or not AUTH_TOKEN:
+    raise SystemExit("Set OLA_AUTH_TOKEN or update DEFAULT_AUTH_TOKEN with the URL-encoded token.")
+if WS_URL == "FILL_ME" or not WS_URL:
+    raise SystemExit("Set OLA_WS_URL or update DEFAULT_WS_URL with the websocket URL.")
 
 
 # ---------------------------------------------------------------------------
