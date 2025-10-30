@@ -1,0 +1,13 @@
+# Ignore everything by default to avoid committing large APKs or decompiled trees.
+*
+
+# Allow tracked project files.
+!/.gitignore
+!/2.py
+!/join_sequence.py
+!/requirements.txt
+!/Dockerfile
+!/README.md
+!/tools/
+!/tools/.gitignore
+!/tools/ws_log_to_frames.py
